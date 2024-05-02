@@ -360,7 +360,7 @@ void Tasks::MoveTask(void *arg) {
     /**************************************************************************************/
     /* The task starts here                                                               */
     /**************************************************************************************/
-    rt_task_set_periodic(NULL, TM_NOW, 100000000);
+    rt_task_set_periodic(NULL, TM_NOW, 100000000); //le temps est en ns
 
     while (1) {
         rt_task_wait_period(NULL);
@@ -382,6 +382,48 @@ void Tasks::MoveTask(void *arg) {
         cout << endl << flush;
     }
 }
+/*********************************************************************************************/
+/*    Battery task                                                                           */
+/*********************************************************************************************/
+
+
+void Tasks::Batterie(void *arg) {
+    Message* retour_batt;
+    int rs;
+
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
+      // Synchronization barrier (waiting that all tasks are starting)
+      rt_sem_p(&sem_barrier, TM_INFINITE);
+    
+    rt_task_set_periodic(NULL, TM_NOW, 500000000); // time put randomly for now
+    while(1) {
+        rt_task_wait_period(NULL);
+        cout << "Check battery level";
+        rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
+        rs = robotStarted;
+        rt_mutex_release(&mutex_robotStarted);
+        if (rs == 1) {
+            
+            rt_mutex_acquire(&mutex_robot, TM_INFINITE);
+            retour_batt = robot.Write(new Message (MESSAGE_ROBOT_BATTERY_GET));
+            rt_mutex_release(&mutex_robot);
+
+            if (retour_batt->CompareID(MESSAGE_ROBOT_BATTERY_LEVEL))
+            {
+                WriteInQueue(&q_messageToMon, retour_batt);
+            }
+            else if (retour_batt->CompareID(MESSAGE_ANSWER_ROBOT_TIMEOUT))
+            {
+                NULL;
+            }
+        
+        }
+    }
+        
+}
+
+
+
 
 /**
  * Write a message in a given queue

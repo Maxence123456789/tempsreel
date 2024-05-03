@@ -24,8 +24,9 @@
 #define PRIORITY_TMOVE 20
 #define PRIORITY_TSENDTOMON 22
 #define PRIORITY_TRECEIVEFROMMON 25
-#define PRIORITY_TSTARTROBOT 20
-#define PRIORITY_TCAMERA 21
+#define PRIORITY_TSTARTROBOT 20 
+#define PRIORITY_TCAMERA 21 //100 MS
+#define PRIORITY_TBATTERY 30 //500 MS  
 
 /*
  * Some remarks:
@@ -121,6 +122,10 @@ void Tasks::Init() {
     }
     if (err = rt_task_create(&th_move, "th_move", 0, PRIORITY_TMOVE, 0)) {
         cerr << "Error task create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_task_create(&th_battery, "th_battery", 0, PRIORITY_TBATTERY, 0)){
+        cerr<<"Error task create : " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
     cout << "Tasks created successfully" << endl << flush;
@@ -385,7 +390,9 @@ void Tasks::MoveTask(void *arg) {
 /*********************************************************************************************/
 /*    Battery task                                                                           */
 /*********************************************************************************************/
-
+/**
+ * @brief Thread getting the battery level.
+ */
 
 void Tasks::Batterie(void *arg) {
     Message* retour_batt;
@@ -395,7 +402,7 @@ void Tasks::Batterie(void *arg) {
       // Synchronization barrier (waiting that all tasks are starting)
       rt_sem_p(&sem_barrier, TM_INFINITE);
     
-    rt_task_set_periodic(NULL, TM_NOW, 500000000); // time put randomly for now
+    rt_task_set_periodic(NULL, TM_NOW, 500000000); // cahier des charges 500ms
     while(1) {
         rt_task_wait_period(NULL);
         cout << "Check battery level";

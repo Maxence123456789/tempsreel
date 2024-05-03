@@ -172,6 +172,10 @@ void Tasks::Run() {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
+    if (err = rt_task_start(&th_battery, (void(*)(void*)) & Tasks::Batterie, this)) {
+        cerr << "Error task start: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
 
     cout << "Tasks launched" << endl << flush;
 }

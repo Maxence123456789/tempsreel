@@ -291,6 +291,7 @@ void Tasks::ReceiveFromMonTask(void *arg) {
             exit(-1);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_COM_OPEN)) {
             rt_sem_v(&sem_openComRobot);
+            
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_START_WITHOUT_WD)) {
             rt_sem_v(&sem_startRobot);
         } else if (msgRcv->CompareID(MESSAGE_ROBOT_GO_FORWARD) ||
@@ -302,6 +303,9 @@ void Tasks::ReceiveFromMonTask(void *arg) {
             rt_mutex_acquire(&mutex_move, TM_INFINITE);
             move = msgRcv->GetID();
             rt_mutex_release(&mutex_move);
+        }
+        else if (msgRcv->CompareID(MESSAGE_CAM_OPEN)) {
+            rt_sem_v(&sem_openCamera); 
         }
         delete(msgRcv); // mus be deleted manually, no consumer
     }
@@ -496,6 +500,7 @@ Message *Tasks::ReadInQueue(RT_QUEUE *queue) {
 
 void Tasks::OpenCamera(void *arg) {
     int status;
+    //camera* cam;
     //int err;
 
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
@@ -507,12 +512,12 @@ void Tasks::OpenCamera(void *arg) {
     /**************************************************************************************/
     while (1) {
         rt_sem_p(&sem_openCamera, TM_INFINITE);
-        cout << "camera status :";
+        cout << "camera status : AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<endl;
         rt_mutex_acquire(&mutex_camera, TM_INFINITE);
         status = cam.Open();
         rt_mutex_release(&mutex_camera);
         cout << status;
-        cout << endl << flush;
+        cout << "BBBBBBBBBBBBBB"<< endl << flush;
 
         Message * msgSend;
         if (status < 0) {

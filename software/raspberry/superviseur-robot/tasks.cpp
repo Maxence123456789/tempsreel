@@ -80,6 +80,10 @@ void Tasks::Init() {
         cerr << "Error mutex create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
+    if (err = rt_mutex_create(&mutex_isCameraOpened, NULL)) {
+        cerr << "Error mutex create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
     cout << "Mutexes created successfully" << endl << flush;
 
     /**************************************************************************************/
@@ -106,6 +110,10 @@ void Tasks::Init() {
         exit(EXIT_FAILURE);
     }
     if (err = rt_sem_create(&sem_closeCamera, NULL, 0, S_FIFO)) {
+        cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
+        exit(EXIT_FAILURE);
+    }
+    if (err = rt_sem_create(&sem_battery, NULL, 0, S_FIFO)) {
         cerr << "Error semaphore create: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -331,6 +339,9 @@ void Tasks::ReceiveFromMonTask(void *arg) {
         else if (msgRcv->CompareID(MESSAGE_CAM_CLOSE)) {
             rt_sem_v(&sem_closeCamera); 
         }
+        else if (msgRcv->CompareID( MESSAGE_ROBOT_BATTERY_GET)) {
+            rt_sem_v(&sem_battery); 
+        }
         delete(msgRcv); // mus be deleted manually, no consumer
     }
 }
@@ -454,6 +465,7 @@ void Tasks::Batterie(void *arg) {
     
     rt_task_set_periodic(NULL, TM_NOW, 500000000); // cahier des charges 500ms
     while(1) {
+        rt_sem_p(&sem_battery, TM_INFINITE);
         rt_task_wait_period(NULL);
         cout << "Check battery level";
         rt_mutex_acquire(&mutex_robotStarted, TM_INFINITE);
@@ -485,6 +497,9 @@ void Tasks::Batterie(void *arg) {
 
 void Tasks::AcquireImages(void *arg) {
     
+    bool boucle ;
+    Img *img;
+    
 
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
 
@@ -496,28 +511,39 @@ void Tasks::AcquireImages(void *arg) {
         rt_task_wait_period(NULL);
         
          // Attendre que la caméra soit ouverte
-        if (isCameraOpened && cam != nullptr) {
+        rt_mutex_acquire(&mutex_isCameraOpened, TM_INFINITE);
+        boucle = isCameraOpened ;
+        rt_mutex_release(&mutex_isCameraOpened);
+        if (boucle) {
+            
         
         cout << "Acquiring image..." << endl<< flush;
        
         
             rt_mutex_acquire(&mutex_camera, TM_INFINITE);
+            
+            if (cam != nullptr) {
         
             // Acquérir une image avec la caméra
-            Img *img = new Img(cam->Grab());
+            img = new Img(cam->Grab());
             
-             rt_mutex_release(&mutex_camera);
+             
+            }
+            else{
+                img = nullptr;
+            }
+            rt_mutex_release(&mutex_camera);
 
             // Construire un message avec l'image acquise
             MessageImg *msgImg = new MessageImg(MESSAGE_CAM_IMAGE, img);
             
-            rt_mutex_acquire(&mutex_monitor, TM_INFINITE);
-            monitor.Write(msgImg);
-            rt_mutex_release(&mutex_monitor);
-
             // Envoyer le message à la file d'attente pour le monitoring
+            if (img != nullptr){
             WriteInQueue(&q_messageToMon, msgImg);
+            }
+            
         }
+       
         
     }
 }
@@ -578,7 +604,9 @@ void Tasks::OpenCamera(void *arg) {
         status = cam->Open();
         rt_mutex_release(&mutex_camera);
         cout << "Open camera status: " << status << endl << flush;
+        rt_mutex_acquire(&mutex_isCameraOpened, TM_INFINITE);
         isCameraOpened = (status >= 0);
+        rt_mutex_release(&mutex_isCameraOpened);
 
         Message *msgSend;
         if (status < 0) {
@@ -609,7 +637,51 @@ void Tasks::CloseCamera(void *arg) {
             delete cam;
             cam = nullptr;
             status = 1; // Camera closed successfully
+            rt_mutex_acquire(&mutex_isCameraOpened, TM_INFINITE);
             isCameraOpened = false;
+            rt_mutex_release(&mutex_isCameraOpened);
+        } else {
+            status = 0; // Camera was not open
+        }
+        rt_mutex_release(&mutex_camera);
+        cout << "Close camera status: " << status << endl << flush;
+
+        Message *msgSend;
+        if (status < 0) {
+            msgSend = new Message(MESSAGE_ANSWER_NACK);
+        } else {
+            msgSend = new Message(MESSAGE_ANSWER_ACK);
+        }
+        WriteInQueue(&q_messageToMon, msgSend); // msgSend will be deleted by sendToMon
+    }
+}
+
+
+
+
+
+void Tasks::GetPosition(void *arg) {
+    int status;
+
+    cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
+    // Synchronization barrier (waiting that all tasks are starting)
+    rt_sem_p(&sem_barrier, TM_INFINITE);
+    
+    /**************************************************************************************/
+    /* The task Get Position starts here                                                  */
+    /**************************************************************************************/
+    while (1) {
+        rt_sem_p(&sem_position, TM_INFINITE);
+        cout << "Position searching..." << endl << flush;
+        rt_mutex_acquire(&mutex_camera, TM_INFINITE);
+        if (cam->IsOpen()) {
+            cam->Close();
+            delete cam;
+            cam = nullptr;
+            status = 1; // Camera closed successfully
+            rt_mutex_acquire(&mutex_isCameraOpened, TM_INFINITE);
+            isCameraOpened = false;
+            rt_mutex_release(&mutex_isCameraOpened);
         } else {
             status = 0; // Camera was not open
         }

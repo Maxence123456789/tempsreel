@@ -91,6 +91,7 @@ private:
     RT_MUTEX mutex_robotStarted;
     RT_MUTEX mutex_move;
     RT_MUTEX mutex_camera;
+    RT_MUTEX mutex_isCameraOpened;
 
     /**********************************************************************/
     /* Semaphores                                                         */
@@ -101,6 +102,7 @@ private:
     RT_SEM sem_startRobot;
     RT_SEM sem_openCamera;
     RT_SEM sem_closeCamera;
+    RT_SEM sem_battery;
 
     /**********************************************************************/
     /* Message queues                                                     */

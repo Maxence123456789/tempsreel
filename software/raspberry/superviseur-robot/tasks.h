@@ -65,6 +65,10 @@ private:
     ComMonitor monitor;
     ComRobot robot;
     Camera * cam;
+    int stopAcq = 0;
+    int arenaOk = 0 ;
+    Img* img;
+    Arena ar;
     bool isCameraOpened = false;
     int robotStarted = 0;
     int move = MESSAGE_ROBOT_STOP;
@@ -82,6 +86,8 @@ private:
     RT_TASK th_openCamera;
     RT_TASK th_closeCamera;
     RT_TASK th_acquireImages;
+    RT_TASK th_searchArena;
+    RT_TASK th_searchPosition;
     
     /**********************************************************************/
     /* Mutex                                                              */
@@ -92,6 +98,7 @@ private:
     RT_MUTEX mutex_move;
     RT_MUTEX mutex_camera;
     RT_MUTEX mutex_isCameraOpened;
+    RT_MUTEX mutex_arena;
 
     /**********************************************************************/
     /* Semaphores                                                         */
@@ -103,6 +110,8 @@ private:
     RT_SEM sem_openCamera;
     RT_SEM sem_closeCamera;
     RT_SEM sem_battery;
+    RT_SEM sem_arena;
+    RT_SEM sem_position;
 
     /**********************************************************************/
     /* Message queues                                                     */
@@ -162,6 +171,16 @@ private:
     * @brief Acquire Images.
     */
     void AcquireImages(void *arg);
+    
+     /**
+    * @brief Acquire Images.
+    */
+    void SearchArena(void *arg);
+    
+     /**
+    * @brief Acquire Images.
+    */
+    void SearchPosition(void *arg);
 
     
     /**********************************************************************/

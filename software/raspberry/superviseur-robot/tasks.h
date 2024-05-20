@@ -66,12 +66,16 @@ private:
     ComRobot robot;
     Camera * cam;
     int stopAcq = 0;
+    Position pos_copy;
     int arenaOk = 0 ;
+    int posOk =0;
     Img* img;
     Arena ar;
     bool isCameraOpened = false;
     int robotStarted = 0;
     int move = MESSAGE_ROBOT_STOP;
+    bool updateBatteryLevel = false;
+    int wd =0;
     
     /**********************************************************************/
     /* Tasks                                                              */
@@ -99,6 +103,9 @@ private:
     RT_MUTEX mutex_camera;
     RT_MUTEX mutex_isCameraOpened;
     RT_MUTEX mutex_arena;
+    RT_MUTEX mutex_position;
+   
+    
 
     /**********************************************************************/
     /* Semaphores                                                         */
@@ -155,7 +162,7 @@ private:
     /**
     * @brief Thread getting the battery level.
     */
-    void Batterie(void *arg);
+    void BatteryTask(void *arg);
     
     /**
     * @brief Open the Camera.

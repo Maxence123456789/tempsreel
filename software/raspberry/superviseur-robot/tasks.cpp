@@ -240,23 +240,23 @@ void Tasks::Run() {
         exit(EXIT_FAILURE);
     }
     
-    if (err = rt_task_start(&th_openCamera, (void(*)(void*)) & Tasks::OpenCamera, this)) {
+    if (err = rt_task_start(&th_openCamera, (void(*)(void*)) & Tasks::OpenCameraTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_task_start(&th_closeCamera, (void(*)(void*)) & Tasks::CloseCamera, this)) {
+    if (err = rt_task_start(&th_closeCamera, (void(*)(void*)) & Tasks::CloseCameraTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_task_start(&th_acquireImages, (void(*)(void*)) & Tasks::AcquireImages, this)) {
+    if (err = rt_task_start(&th_acquireImages, (void(*)(void*)) & Tasks::AcquireImagesTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-    if (err = rt_task_start(&th_searchArena, (void(*)(void*)) & Tasks::SearchArena, this)) {
+    if (err = rt_task_start(&th_searchArena, (void(*)(void*)) & Tasks::SearchArenaTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
-     if (err = rt_task_start(&th_searchPosition, (void(*)(void*)) & Tasks::SearchPosition, this)) {
+     if (err = rt_task_start(&th_searchPosition, (void(*)(void*)) & Tasks::SearchPositionTask, this)) {
         cerr << "Error task start: " << strerror(-err) << endl << flush;
         exit(EXIT_FAILURE);
     }
@@ -566,7 +566,7 @@ void Tasks::BatteryTask(void *arg){
 /*********************************************************************************************/
 
 
-void Tasks::AcquireImages(void *arg) {
+void Tasks::AcquireImagesTask(void *arg) {
     
     bool boucle ;
 
@@ -670,7 +670,7 @@ Message *Tasks::ReadInQueue(RT_QUEUE *queue) {
 
 
 
-void Tasks::OpenCamera(void *arg) {
+void Tasks::OpenCameraTask(void *arg) {
     int status;
 
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
@@ -702,7 +702,7 @@ void Tasks::OpenCamera(void *arg) {
     }
 }
 
-void Tasks::CloseCamera(void *arg) {
+void Tasks::CloseCameraTask(void *arg) {
     int status;
 
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
@@ -743,7 +743,7 @@ void Tasks::CloseCamera(void *arg) {
 
 
 
-void Tasks::SearchArena(void *arg) {
+void Tasks::SearchArenaTask(void *arg) {
     bool status_ar;
    
 
@@ -780,7 +780,7 @@ void Tasks::SearchArena(void *arg) {
 }
 
 
-void Tasks::SearchPosition(void *arg) {
+void Tasks::SearchPositionTask(void *arg) {
     bool camop;
     cout << "Start " << __PRETTY_FUNCTION__ << endl << flush;
     // Synchronization barrier (waiting that all tasks are starting)

@@ -167,27 +167,27 @@ private:
     /**
     * @brief Open the Camera.
     */
-    void OpenCamera(void *arg);
+    void OpenCameraTask(void *arg);
     
      /**
     * @brief Close the Camera.
     */
-    void CloseCamera(void *arg);
+    void CloseCameraTask(void *arg);
     
      /**
     * @brief Acquire Images.
     */
-    void AcquireImages(void *arg);
+    void AcquireImagesTask(void *arg);
     
      /**
     * @brief Acquire Images.
     */
-    void SearchArena(void *arg);
+    void SearchArenaTask(void *arg);
     
      /**
     * @brief Acquire Images.
     */
-    void SearchPosition(void *arg);
+    void SearchPositionTask(void *arg);
 
     
     /**********************************************************************/
